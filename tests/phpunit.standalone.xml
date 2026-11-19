@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  - SPDX-FileCopyrightText: 2026 Nextcloud GmbH and Nextcloud contributors
+  - SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+<phpunit bootstrap="bootstrap-standalone.php"
+	colors="true">
+	<testsuite name="user_oidc patch tests without a Nextcloud tree">
+		<directory>unit/Dav</directory>
+	</testsuite>
+</phpunit>
