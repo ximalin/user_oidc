@@ -8,6 +8,7 @@ declare(strict_types=1);
  */
 
 use OCA\UserOIDC\Dav\DavRequestUser;
+use OCA\UserOIDC\Dav\EphemeralPhpSession;
 use OCA\UserOIDC\Dav\RequestUserOverlay;
 use OCP\IUser;
 use PHPUnit\Framework\TestCase;
@@ -21,7 +22,7 @@ class DavRequestUserTest extends TestCase {
 		$session = new FakeUserSession($inner);
 		$user = $this->user('alice@example.test');
 
-		$overlaid = (new DavRequestUser())->bind($session, $user);
+		$overlaid = $this->binder()->bind($session, $user);
 
 		$this->assertTrue($overlaid);
 		$this->assertInstanceOf(RequestUserOverlay::class, $session->getSession());
@@ -38,7 +39,7 @@ class DavRequestUserTest extends TestCase {
 		$session = new FakeUserSession(new RequestUserOverlay($inner));
 		$user = $this->user('alice@example.test');
 
-		$this->assertTrue((new DavRequestUser())->bind($session, $user));
+		$this->assertTrue($this->binder()->bind($session, $user));
 		$this->assertSame('alice@example.test', $session->getSession()->get('user_id'));
 		$this->assertArrayNotHasKey('user_id', $inner->data);
 	}
@@ -46,7 +47,7 @@ class DavRequestUserTest extends TestCase {
 	public function testWithoutSetSessionTheKeyIsWrittenAndThenReleased(): void {
 		$session = new SessionWithoutSwap();
 		$user = $this->user('alice@example.test');
-		$binder = new DavRequestUser();
+		$binder = $this->binder();
 
 		$this->assertFalse($binder->bind($session, $user));
 		$this->assertSame('alice@example.test', $session->session->get('user_id'));
@@ -56,6 +57,10 @@ class DavRequestUserTest extends TestCase {
 		$this->assertNull($session->session->get('user_id'));
 		$this->assertNull($session->getUser());
 		$binder->releaseFallback();
+	}
+
+	private function binder(): DavRequestUser {
+		return new DavRequestUser(new EphemeralPhpSession());
 	}
 
 	private function user(string $uid): IUser {

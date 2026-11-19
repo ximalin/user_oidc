@@ -28,9 +28,12 @@ use OCP\IUserSession;
  * makes getLoginName() return null while a user is active.
  */
 class DavRequestUser {
-	private ?IUserSession $fallback = null;
+	public function __construct(
+		private EphemeralPhpSession $ephemeralPhpSession,
+	) {
+	}
 
-	private bool $fallbackArmed = false;
+	private ?IUserSession $fallback = null;
 
 	/**
 	 * @return bool true when user_id stays in memory and is not written to the PHP session
@@ -80,11 +83,9 @@ class DavRequestUser {
 
 	private function scheduleFallbackClear(IUserSession $userSession): void {
 		$this->fallback = $userSession;
-		if ($this->fallbackArmed) {
-			return;
-		}
-		$this->fallbackArmed = true;
-		register_shutdown_function(function (): void {
+		// Cleared before the cookieless session is destroyed, so a real
+		// session write cannot be the last thing stored for this request.
+		$this->ephemeralPhpSession->runBeforeDiscard(function (): void {
 			$this->releaseFallback();
 		});
 	}
